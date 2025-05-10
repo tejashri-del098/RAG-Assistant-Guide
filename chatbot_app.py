@@ -7,7 +7,7 @@ from sentence_transformers import SentenceTransformer
 import requests
 
 # Load document chunks and FAISS index
-with open("your_file.txt", "r", encoding="latin-1") as file:
+with open(""document_chunks.txt"", "r", encoding="latin-1") as file:
     document_chunks = file.read().split("\n\n")
 
 
