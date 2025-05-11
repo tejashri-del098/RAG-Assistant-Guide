@@ -5,6 +5,7 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import requests
+import re  # For calculator expression cleaning
 
 # Load document chunks and FAISS index
 with open("document_chunks.txt", "r", encoding="latin-1") as file:
@@ -42,10 +43,42 @@ def get_answer_from_gemini(query, context_chunks, api_key):
     else:
         return f"Error: {response.status_code} - {response.text}"
 
+# 🧮 CALCULATOR: Evaluates safe math expressions
+def handle_calculator(query):
+    try:
+        safe_expr = re.sub(r"[^0-9+\-*/(). ]", "", query)
+        result = eval(safe_expr)
+        return f"🧮 Result: {result}"
+    except:
+        return "⚠️ I couldn't calculate that. Please try a valid math expression like 5 + 4 * 2."
+
+# 📖 DICTIONARY: Fetches meaning of a word using Free Dictionary API
+def handle_dictionary(word):
+    url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        meaning = data[0]["meanings"][0]["definitions"][0]["definition"]
+        example = data[0]["meanings"][0]["definitions"][0].get("example", "No example available.")
+        return f"📖 Meaning: {meaning}\n📌 Example: {example}"
+    else:
+        return "❌ Word not found. Please check spelling or try another word."
+
+
+
 # Streamlit UI
 st.set_page_config(page_title="RAG Chatbot", layout="centered")
 st.title("💬 RAG Chatbot with Gemini + FAISS")
 st.markdown("Ask a question about the company, smartwatch, or smartphone documents.")
+
+# 🧠 INTENT DETECTOR: Checks if user wants calculator, dictionary, or RAG
+def detect_intent(q):
+    if any(op in q for op in ["+", "-", "*", "/", "add", "subtract", "multiply", "divide"]):
+        return "calculator"
+    elif "define" in q.lower() or "meaning of" in q.lower():
+        return "dictionary"
+    return "chatbot"
+
 
 # Input API key securely
 api_key = st.text_input("🔑 Enter your Gemini API key", type="password")
@@ -54,13 +87,24 @@ api_key = st.text_input("🔑 Enter your Gemini API key", type="password")
 query = st.text_input("📝 Ask your question here:")
 
 if query and api_key:
-    with st.spinner("Thinking..."):
-        context_chunks = retrieve_relevant_chunks(query)
-        answer = get_answer_from_gemini(query, context_chunks, api_key)
+    with st.spinner("Processing..."):
+        intent = detect_intent(query)
 
-        st.markdown("### 🔍 Top Relevant Chunks:")
-        for chunk in context_chunks:
-            st.info(chunk)
+        if intent == "calculator":
+            result = handle_calculator(query)
+            st.success(result)
 
-        st.markdown("### 🤖 Answer:")
-        st.success(answer)
+        elif intent == "dictionary":
+            word = query.lower().replace("define", "").replace("meaning of", "").strip()
+            result = handle_dictionary(word)
+            st.info(result)
+
+        else:
+            context_chunks = retrieve_relevant_chunks(query)
+            st.markdown("### 🔍 Top Relevant Chunks:")
+            for chunk in context_chunks:
+                st.info(chunk)
+            answer = get_answer_from_gemini(query, context_chunks, api_key)
+            st.markdown("### 🤖 Answer:")
+            st.success(answer)
+
