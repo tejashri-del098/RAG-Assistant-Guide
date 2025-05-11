@@ -62,7 +62,9 @@ RAG-Assistant-Guide/
 ✅ Ask contextual questions based on embedded document knowledge  
 ✅ Uses RAG pipeline for better accuracy  
 ✅ Secure Gemini API integration  
-✅ Beautiful Streamlit interface  
+✅ Beautiful Streamlit interface
+✅ Calculator: Perform basic arithmetic operations
+✅ Dictionary: Get word definitions and examples
 ✅ Highly modular & scalable  
 
 ---
