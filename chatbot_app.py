@@ -13,7 +13,8 @@ with open("document_chunks.txt", "r", encoding="latin-1") as file:
 
 
 index = faiss.read_index("document_index.faiss")
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+
 
 # Function to encode and retrieve relevant chunks
 def retrieve_relevant_chunks(query, top_k=3):
